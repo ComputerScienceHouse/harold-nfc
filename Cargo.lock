@@ -197,6 +197,9 @@ version = "0.1.0"
 dependencies = [
  "gatekeeper-members",
  "libgatekeeper-sys",
+ "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -600,6 +603,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "serde",
+ "serde_json",
  "serde_urlencoded",
  "tokio",
  "tokio-native-tls",
