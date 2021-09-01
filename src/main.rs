@@ -1,6 +1,7 @@
 extern crate reqwest;
 extern crate gatekeeper_members;
 extern crate libgatekeeper_sys;
+extern crate chrono;
 
 use gatekeeper_members::{GateKeeperMemberListener, FetchError};
 use libgatekeeper_sys::Nfc;
@@ -8,9 +9,15 @@ use std::process::{Command, ExitStatus};
 use reqwest::StatusCode;
 use serde_json::json;
 use std::env;
+use chrono::prelude::*;
 
 fn get_volume() -> &'static str {
-    return "100";
+    let hour = Local::now().hour();
+    if 23 >= hour && hour >= 7 {
+        return "100";
+    } else {
+        return "73";
+    }
 }
 
 fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
