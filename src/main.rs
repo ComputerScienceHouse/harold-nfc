@@ -12,12 +12,25 @@ use std::env;
 use chrono::prelude::*;
 
 fn get_volume() -> &'static str {
-    let hour = Local::now().hour();
-    if 23 >= hour && hour >= 7 {
-        return "100";
+    let now = Local::now();
+    let hour = now.hour();
+    let weekday = now.weekday();
+
+    if weekday == Weekday::Sun {
+        if (hour < 1 || hour >= 7) && 23 >= hour {
+            return "100";
+        }
+    } else if weekday == Weekday::Sat {
+        if hour < 1 || hour >= 7 {
+            return "100";
+        }
     } else {
-        return "73";
+        if 23 >= hour && hour >= 7 {
+            return "100";
+        }
     }
+
+    return "73";
 }
 
 fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
