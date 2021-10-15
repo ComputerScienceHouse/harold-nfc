@@ -110,7 +110,10 @@ fn run_harold(http: reqwest::blocking::Client, harold_auth: String, uid: String)
 fn main() {
     let mut nfc = Nfc::new().unwrap();
     let mut listener = GateKeeperMemberListener::new(
-        &mut nfc, "pn532_uart:/dev/ttyUSB0".to_string()
+        &mut nfc,
+        env::var("HAROLD_GK_READER").unwrap_or(
+            "pn532_uart:/dev/ttyUSB0".to_string()
+        ).to_string()
     ).unwrap();
     let http = reqwest::blocking::Client::new();
 

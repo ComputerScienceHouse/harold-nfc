@@ -358,9 +358,9 @@ checksum = "3cb00336871be5ed2c8ed44b60ae9959dc5b9f08539422ed43f09e34ecaeba21"
 
 [[package]]
 name = "libgatekeeper-sys"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3408979a66cc5e927ac7f0a1363c0b0f50e8fb23db408c4c1c73ce008221aa49"
+checksum = "1ec6ae98d36ba5866c22faadf967e91fe55f9c60dd02f83b4f43aa432e079434"
 
 [[package]]
 name = "log"
