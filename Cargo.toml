@@ -12,3 +12,4 @@ serde = { version = "1.0.126", features = ["derive"] }
 libgatekeeper-sys = "0.2.1"
 gatekeeper-members = "0.1.0"
 chrono = "0.4.19"
+rand = "0.8.4"
