@@ -68,15 +68,14 @@ fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
 fn scan_complete(uid: &str) -> String {
     match uid {
         "mom" => {
-            return "scans/aaa.mp3".to_string();
+            return "special/aaa.mp3".to_string();
         },
         _ => {
             // get all files from scans folder
             let files = std::fs::read_dir("scans").unwrap();
-            // return a random file that isn't aaa.mp3
+            // return a random file
             let mut rng = rand::thread_rng();
-            let mut file_list: Vec<_> = files.map(|f| f.unwrap().path()).collect();
-            file_list.retain(|f| f.to_str().unwrap() != "scans/aaa.mp3");
+            let file_list: Vec<_> = files.map(|f| f.unwrap().path()).collect();
             let file = &file_list.choose(&mut rng).unwrap();
             return file.to_str().unwrap().to_string();
         }
