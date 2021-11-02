@@ -10,6 +10,7 @@ use reqwest::StatusCode;
 use serde_json::json;
 use std::env;
 use chrono::prelude::*;
+use rand::prelude::SliceRandom;
 
 fn get_volume() -> &'static str {
     let now = Local::now();
@@ -64,13 +65,19 @@ fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
     }
 }
 
-fn scan_complete(uid: &str) -> &'static str {
+fn scan_complete(uid: &str) -> String {
     match uid {
         "mom" => {
-            return "aaa.mp3";
+            return "special/aaa.mp3".to_string();
         },
         _ => {
-            return "scan-complete-mom.mp3";
+            // get all files from scans folder
+            let files = std::fs::read_dir("scans").unwrap();
+            // return a random file
+            let mut rng = rand::thread_rng();
+            let file_list: Vec<_> = files.map(|f| f.unwrap().path()).collect();
+            let file = &file_list.choose(&mut rng).unwrap();
+            return file.to_str().unwrap().to_string();
         }
     }
 }
@@ -98,7 +105,7 @@ fn get_audiophiler(http: reqwest::blocking::Client, harold_auth: &str, uid: Stri
 
 fn run_harold(http: reqwest::blocking::Client, harold_auth: String, uid: String) {
     // Hopefully we don't crash? lol
-    play_music(scan_complete(&uid.clone()), false).unwrap();
+    play_music(&scan_complete(&uid.clone()), false).unwrap();
     println!("Played scan complete");
     if let Some(sound) = get_audiophiler(http, &harold_auth, uid.clone()) {
         play_music(&sound, true).unwrap();
