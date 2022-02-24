@@ -33,7 +33,7 @@ fn get_volume() -> &'static str {
     return "73";
 }
 
-fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
+fn play_music(path: &str, do_cap: bool) -> Result<(), ExitStatus> {
     let mut cmd = &mut Command::new("ffplay");
     cmd = cmd
         .arg(path.clone()).arg("-b:a").arg("64k")
@@ -51,7 +51,7 @@ fn play_music(path: &str, do_cap: bool) -> Result<&str, ExitStatus> {
             Ok(Some(status)) => {
                 // Process exited
                 if status.success() {
-                    return Ok(path.clone());
+                    return Ok(());
                 } else {
                     return Err(status);
                 }
@@ -75,7 +75,7 @@ fn scan_complete(uid: &str) -> &'static str {
     }
 }
 
-fn get_audiophiler(http: reqwest::blocking::Client, harold_auth: &str, uid: String) -> Option<String> {
+fn get_audiophiler(http: reqwest::blocking::Client, harold_auth: &str, uid: String) -> Result<String, RequestError> {
     let response = http.post(
         "https://audiophiler.csh.rit.edu/get_harold/".to_string() + &uid
     ).json(&json!({
@@ -83,27 +83,41 @@ fn get_audiophiler(http: reqwest::blocking::Client, harold_auth: &str, uid: Stri
     })).send();
     match response {
         Ok(res) => match res.status() {
-            StatusCode::OK => return Some(res.text().unwrap()),
+            StatusCode::OK => Ok(res.text().unwrap()),
             status => {
                 println!("Audiophiler responded non-200: {:?}", status);
-                return None;
+                Err(RequestError::StatusCode(status))
             },
         },
         Err(err) => {
             println!("Couldn't fetch harold for user: {:?}", err);
-            return None;
+            Err(RequestError::Unknown)
         },
-    };
+    }
 }
 
-fn run_harold(http: reqwest::blocking::Client, harold_auth: String, uid: String) {
+enum RequestError {
+    Unknown,
+    StatusCode(StatusCode),
+}
+
+enum RunFailure {
+    ExitCode(ExitStatus),
+    RequestError(RequestError),
+}
+
+fn run_harold(http: reqwest::blocking::Client, harold_auth: String, uid: String) -> Result<(), RunFailure> {
     // Hopefully we don't crash? lol
-    play_music(scan_complete(&uid.clone()), false).unwrap();
+    if let Err(err) = play_music(scan_complete(&uid.clone()), false) {
+        return Err(RunFailure::ExitCode(err));
+    }
     println!("Played scan complete");
-    if let Some(sound) = get_audiophiler(http, &harold_auth, uid.clone()) {
-        play_music(&sound, true).unwrap();
-    } else {
-        println!("Couldn't fetch Harold for user {}?", uid);
+    match get_audiophiler(http, &harold_auth, uid.clone()) {
+        Ok(sound) => match play_music(&sound, true) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(RunFailure::ExitCode(err)),
+        },
+        Err(request_error) => Err(RunFailure::RequestError(request_error)),
     }
 }
 
@@ -126,11 +140,22 @@ fn main() {
             match listener.fetch_user(association) {
                 Ok(value) => {
                     println!("Got user with name {}", value["user"]["uid"].as_str().unwrap());
-                    run_harold(
+                    match run_harold(
                         http.clone(),
                         harold_auth.clone(),
                         value["user"]["uid"].as_str().unwrap().to_string()
-                    );
+                    ) {
+                        Ok(_) => println!("Played harold for user!"),
+                        Err(RunFailure::ExitCode(status)) =>
+                            eprintln!("Failed to play! {}", status),
+                        Err(RunFailure::RequestError(
+                            RequestError::StatusCode(response_code))) =>
+                            eprintln!("Couldn't get user's harold! Server responded with {}", response_code),
+                        Err(RunFailure::RequestError(
+                            RequestError::Unknown)) => {
+                            eprintln!("Couldn't get user's harold, not sure why!");
+                        }
+                    }
                 }
                 Err(FetchError::NotFound) => {
                     println!("User not found");
