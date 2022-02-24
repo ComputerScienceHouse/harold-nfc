@@ -209,6 +209,7 @@ dependencies = [
  "chrono",
  "gatekeeper-members",
  "libgatekeeper-sys",
+ "rand",
  "reqwest",
  "serde",
  "serde_json",
