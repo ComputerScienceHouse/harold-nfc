@@ -115,7 +115,7 @@ enum RunFailure {
 
 fn run_harold(http: reqwest::blocking::Client, harold_auth: String, uid: String) -> Result<(), RunFailure> {
     // Hopefully we don't crash? lol
-    if let Err(err) = play_music(scan_complete(&uid.clone()), false) {
+    if let Err(err) = play_music(&scan_complete(&uid.clone()), false) {
         return Err(RunFailure::ExitCode(err));
     }
     println!("Played scan complete");
