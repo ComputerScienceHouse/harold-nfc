@@ -1,11 +1,11 @@
 use chrono::prelude::*;
-use gatekeeper_members::{FetchError, GateKeeperMemberListener};
-use libgatekeeper_sys::Nfc;
+use gatekeeper_members::{FetchError, GateKeeperMemberListener, RealmType};
 use rand::prelude::SliceRandom;
 use reqwest::StatusCode;
 use serde_json::json;
 use std::env;
 use std::process::{Command, ExitStatus};
+use std::time::Duration;
 
 fn get_volume() -> &'static str {
     let now = Local::now();
@@ -132,10 +132,10 @@ fn run_harold(
 }
 
 fn main() {
-    let mut nfc = Nfc::new().unwrap();
+    env_logger::init();
     let mut listener = GateKeeperMemberListener::new(
-        &mut nfc,
         env::var("HAROLD_GK_READER").unwrap_or_else(|_| "pn532_uart:/dev/ttyUSB0".to_string()),
+        RealmType::MemberProjects,
     )
     .unwrap();
     let http = reqwest::blocking::Client::new();
@@ -180,5 +180,6 @@ fn main() {
                 }
             };
         }
+        std::thread::sleep(Duration::from_millis(200)); // Don't spam the reader
     }
 }
