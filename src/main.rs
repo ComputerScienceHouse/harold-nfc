@@ -8,23 +8,28 @@ use std::process::{Command, ExitStatus};
 use std::time::Duration;
 
 fn get_volume() -> &'static str {
-    let now = Local::now();
     let hour = now.hour();
     let weekday = now.weekday();
 
-    if weekday == Weekday::Sun {
-        if !(1..7).contains(&hour) && 23 >= hour {
-            return "100";
-        }
-    } else if weekday == Weekday::Sat {
-        if !(1..7).contains(&hour) {
-            return "100";
-        }
-    } else if (7..=23).contains(&hour) {
-        return "100";
+    let is_quiet_hours = match (weekday, hour) {
+        // Entering a weekend, quiet hours till 1 AM the following day
+        (WeekDay::Fri, 0..7) => true,
+        // In the weekend, quiet hours are from 1 AM - 7 AM
+        (WeekDay::Sat, 1..7) => true,
+        // In the weekend, 1 AM - 7 AM. It's a schoolnight though,
+        // quiet hours start at 11 PM
+        (WeekDay::Sun, 1..7) | (WeekDay::Sun, 23..) => true,
+        // Weekday normal quiet hours. Till 7 AM, then starting at 11 PM
+        (Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu, 0..7)
+        | (Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu, 23..) => true,
+        _ => false,
+    };
+    if is_quiet_hours {
+        "73"
+    } else {
+        "100"
     }
 
-    "73"
 }
 
 fn play_music(path: &str, do_cap: bool) -> Result<(), ExitStatus> {
